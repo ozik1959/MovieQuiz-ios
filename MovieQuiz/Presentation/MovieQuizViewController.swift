@@ -35,7 +35,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             self?.show(quiz: viewModel)
         }
     }
-    
     func startOver() {
         self.currentQuestionIndex = 0
         self.correctAnswers = 0
