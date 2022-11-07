@@ -6,6 +6,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     @IBOutlet weak private var imageView: UIImageView!
     @IBOutlet weak private var textLabel: UILabel!
     @IBOutlet weak private var counterLabel: UILabel!
+    @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     private var currentQuestionIndex: Int = 0
     private var correctAnswers: Int = 0
     private let questionsAmount: Int = 10
@@ -13,15 +14,18 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     private var currentQuestion: QuizQuestion?
     private var alertPresenterDelegate: AlertPresenterDelegate?
     private var statisticServiceImplementation: StatisticServiceImplementation?
+    private var moviesLoader: MoviesLoader?
+    
     
     // MARK: - Lifecycle
     override  func viewDidLoad() {
         super.viewDidLoad()
-        questionFactory = QuestionFactory(delegate: self)
-        questionFactory?.requestNextQuestion()
         alertPresenterDelegate = AlertPresenter(startOverDelegate: self)
+        questionFactory?.requestNextQuestion()
         imageView.layer.cornerRadius = 20
         statisticServiceImplementation = StatisticServiceImplementation()
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        questionFactory?.loadData()
     }
     // MARK: - QuestionFactoryDelegate
     func didRecieveNextQuestion(question: QuizQuestion?) {
@@ -34,6 +38,16 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         DispatchQueue.main.async { [weak self] in
             self?.show(quiz: viewModel)
         }
+    }
+    
+    func didLoadDataFromServer() {
+        activityIndicator.isHidden = true
+        questionFactory?.requestNextQuestion()
+    }
+    
+    func didFailToLoadData(with error: Error) {
+        showNetworkError(message: error.localizedDescription)
+        
     }
     
     func startOver() {
@@ -56,8 +70,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         self.statisticServiceImplementation?.correctAnswersAllTheTime += correctAnswers
         self.statisticServiceImplementation?.questionsAllTheTime += questionsAmount
         self.statisticServiceImplementation?.totalAccuracy = Double(statisticServiceImplementation.correctAnswersAllTheTime) / Double(statisticServiceImplementation.questionsAllTheTime) * 100
-    // MARK: - AlertModel
-    let alertModel = AlertModel(title: result.title,
+        // MARK: - AlertModel
+        let alertModel = AlertModel(title: result.title,
                                     masseg: """
                                     Ваш результат: \(correctAnswers)/\(questionsAmount)
                                     Количеств сыгранных квизов: \(statisticServiceImplementation.gamesQuizCount)
@@ -66,24 +80,22 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
                                     """,
                                     buttonText: result.buttonText)
         
-        
-        
-       guard let alertPresenterDelegate = alertPresenterDelegate else {return}
+        guard let alertPresenterDelegate = alertPresenterDelegate else {return}
         present(alertPresenterDelegate.showAlert(alertModel: alertModel), animated: true)
- 
+        
     }
-
-
+    
+    
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         return QuizStepViewModel(
-            image: UIImage(named: model.image) ?? UIImage(),
+            image: UIImage(data: model.image) ?? UIImage(),
             question: model.text,
             questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)") // высчитываем номер вопроса
     }
     
     private func showAnswerResult(isCorrect: Bool) {
         if isCorrect {
-                correctAnswers += 1
+            correctAnswers += 1
         }
         
         imageView.layer.masksToBounds = true
@@ -110,11 +122,31 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
                 title: "Этот раунд окончен!",
                 text: text,
                 buttonText: "Сыграть ещё раз")
-            show(quiz: viewModel)
+                show(quiz: viewModel)
         } else {
             currentQuestionIndex += 1
             questionFactory?.requestNextQuestion()
         }
+    }
+    
+    private func showLoadingIndicator() {
+        activityIndicator.isHidden = false
+        activityIndicator.startAnimating()
+    }
+    private func hideLoadingIndicator() {
+        activityIndicator.isHidden = true
+    }
+    private func showNetworkError(message: String) {
+        hideLoadingIndicator() // скрываем индикатор загрузки
+        
+    let alertError = AlertModel(title: "Ошибка",
+                               masseg: message,
+                               buttonText: "Попробовать ещё раз") { [weak self] in
+            guard let self = self else { return }
+            self.startOver()
+        }
+        guard let alertError = alertPresenterDelegate?.showAlert(alertModel: alertError) else { return }
+        present(alertError, animated: true)
     }
     
     // MARK: Buttons YES and NO
@@ -124,7 +156,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         }
         let givenAnswer = true
         showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
-}
+    }
     
     @IBAction private func noButtonClicked(_ sender: Any) {
         guard let currentQuestion = currentQuestion else {
@@ -132,7 +164,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         }
         let givenAnswer = false
         showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
-}
+    }
     
 }
 
