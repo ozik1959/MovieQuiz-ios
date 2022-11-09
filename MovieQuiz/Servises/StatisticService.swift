@@ -27,7 +27,7 @@ final class StatisticServiceImplementation: StatisticServiceProtocol {
             bestGame = currentGame
         }
     }
-
+    
     var bestGame: GameRecord {                              //Лучшая игра.
         get {
             guard let data = userDefaults.data(forKey: Keys.bestGame.rawValue),
