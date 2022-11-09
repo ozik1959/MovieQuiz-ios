@@ -4,7 +4,6 @@ struct MostPopularMovies: Codable {
     let errorMessage: String
     let items: [MostPopularMovie]
 }
-
 struct MostPopularMovie: Codable {
     let title: String
     let rating: String
@@ -22,7 +21,6 @@ struct MostPopularMovie: Codable {
             
             return newURL
         }
-    
     private enum CodingKeys: String, CodingKey {
     case title = "fullTitle"
     case rating = "imDbRating"

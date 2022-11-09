@@ -18,14 +18,15 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     
     
     // MARK: - Lifecycle
-    override  func viewDidLoad() {
+    override func viewDidLoad() {
         super.viewDidLoad()
-        alertPresenterDelegate = AlertPresenter(startOverDelegate: self)
         questionFactory?.requestNextQuestion()
-        imageView.layer.cornerRadius = 20
-        statisticServiceImplementation = StatisticServiceImplementation()
         questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        alertPresenterDelegate = AlertPresenter(startOverDelegate: self)
+        statisticServiceImplementation = StatisticServiceImplementation()
+        imageView.layer.cornerRadius = 20
         questionFactory?.loadData()
+        showLoadingIndicator()
     }
     // MARK: - QuestionFactoryDelegate
     func didRecieveNextQuestion(question: QuizQuestion?) {
@@ -122,7 +123,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
                 title: "Этот раунд окончен!",
                 text: text,
                 buttonText: "Сыграть ещё раз")
-                show(quiz: viewModel)
+            show(quiz: viewModel)
         } else {
             currentQuestionIndex += 1
             questionFactory?.requestNextQuestion()
@@ -138,10 +139,10 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     }
     private func showNetworkError(message: String) {
         hideLoadingIndicator() // скрываем индикатор загрузки
-        
-    let alertError = AlertModel(title: "Ошибка",
-                               masseg: message,
-                               buttonText: "Попробовать ещё раз") { [weak self] in
+        // MARK: Alert Error
+        let alertError = AlertModel(title: "Ошибка",
+                                    masseg: message,
+                                    buttonText: "Попробовать ещё раз") { [weak self] in
             guard let self = self else { return }
             self.startOver()
         }

@@ -10,7 +10,6 @@ class QuestionFactory: QuestionFactoryProtocol {
         self.moviesLoader = moviesLoader
         self.delegate = delegate
     }
-
     
     func requestNextQuestion() {
         DispatchQueue.global().async { [weak self] in
@@ -23,9 +22,12 @@ class QuestionFactory: QuestionFactoryProtocol {
             
             do {
                 imageData = try Data(contentsOf: movie.resizedImageURL)
+                print("данные загружаются")
             } catch {
                 print("Failed to load image")
+                DispatchQueue.main.async {
                 self.delegate?.didFailToLoadData(with: error)
+                }
             }
             let rating = Float(movie.rating) ?? 0
             let text = "Рейтинг этого фильма больше чем 7?"
@@ -54,14 +56,13 @@ class QuestionFactory: QuestionFactoryProtocol {
             }
         }
     }
-    
 }
 
 
 
 
-    
-    
+
+
     
     
     
