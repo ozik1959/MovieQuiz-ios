@@ -38,42 +38,43 @@ final class MovieQuizUITests: XCTestCase {
         let secondPoster = app.images["Poster"]
         let indexLable = app.staticTexts["Index"]
         
-        sleep(5)
+        sleep(2)
         XCTAssertTrue(indexLable.label == "2/10")
         XCTAssertFalse(firstPoster == secondPoster)
     }
     func testGameFinish() {
         for _ in 1...10 {
             app.buttons["No"].tap()
-            app.buttons["Yes"].tap()
+            sleep(1)
         }
         
-        sleep(5)
+        sleep(2)
         
         let alert = app.alerts["Этот раунд окончен!"]
         
         
-        XCTAssertTrue(app.alerts["Этот раунд окончен!"].exists)
+        XCTAssertTrue(alert.exists)
         XCTAssertTrue(alert.label == "Этот раунд окончен!")
-        XCTAssertTrue(alert.buttons.firstMatch.label == "Ok")
+        XCTAssertTrue(alert.buttons.firstMatch.label == "Сыграть ещё раз")
     }
 
     func testAlertDismiss() {
         for _ in 1...10 {
             app.buttons["No"].tap()
-            app.buttons["Yes"].tap()
+            sleep(1)
         }
         
-        sleep(5)
+        sleep(2)
         
         let alert = app.alerts["Этот раунд окончен!"]
         alert.buttons.firstMatch.tap()
         
-        sleep(5)
+        sleep(2)
         
         let indexLabel = app.staticTexts["Index"]
         
-        XCTAssertFalse(app.alerts["Этот раунд окончен!"].exists)
+        XCTAssertFalse(alert.exists)
         XCTAssertTrue(indexLabel.label == "1/10")
     }
 }
+
