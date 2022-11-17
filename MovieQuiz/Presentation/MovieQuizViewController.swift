@@ -7,7 +7,6 @@ final class MovieQuizViewController: UIViewController, AlertPresentProtocol, Mov
     @IBOutlet weak private var counterLabel: UILabel!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     private var alertPresenterDelegate: AlertPresenterDelegate?
-    private var moviesLoader: MoviesLoader?
     private var presenter: MovieQuizPresenter!
     
     // MARK: - Lifecycle
@@ -75,6 +74,8 @@ final class MovieQuizViewController: UIViewController, AlertPresentProtocol, Mov
         }
         
         alert.addAction(action)
+        present(alert, animated: true)
+        
     }
     // MARK: Buttons YES and NO
     @IBAction private func yesButtonClicked(_ sender: Any) {
