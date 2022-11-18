@@ -1,7 +1,7 @@
 import Foundation
 
 final class StatisticServiceImplementation: StatisticServiceProtocol {
-    private let userDefaults = UserDefaults.standard
+    private var userDefaults = UserDefaults.standard
     var totalAccuracy = Double()
     var correctAnswersAllTheTime: Int {
         get {
@@ -26,6 +26,9 @@ final class StatisticServiceImplementation: StatisticServiceProtocol {
         if currentGame > bestGame {
             bestGame = currentGame
         }
+        
+        totalAccuracy = Double(correctAnswersAllTheTime) / Double(questionsAllTheTime) * 100
+        print("\(correctAnswersAllTheTime)")
     }
     
     var bestGame: GameRecord {                              //Лучшая игра.
