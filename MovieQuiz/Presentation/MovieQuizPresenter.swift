@@ -1,7 +1,7 @@
 import Foundation
 import UIKit
 final class MovieQuizPresenter: QuestionFactoryDelegate {
-    private var statisticServiceImplementation: StatisticServiceImplementation!
+    private var statisticService: StatisticServiceProtocol?
     private var questionFactory: QuestionFactoryProtocol?
     private weak var viewController: MovieQuizViewControllerProtocol?
     private var correctAnswers: Int = 0
@@ -10,7 +10,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     private var currentQuestionIndex: Int = 0
     init(viewController: MovieQuizViewControllerProtocol) {
         self.viewController = viewController
-        self.statisticServiceImplementation = StatisticServiceImplementation()
+        statisticService = StatisticServiceImplementation()
         questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
         questionFactory?.loadData()
         viewController.showLoadingIndicator()
@@ -40,16 +40,19 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
         currentQuestionIndex == questionsAmount - 1
     }
     
-    func didAnswer(isCorrectAnswer: Bool) {
-        if isCorrectAnswer {
-            correctAnswers += 1
-        }
-    }
-    
     func restartGame() {
         currentQuestionIndex = 0
         correctAnswers = 0
         questionFactory?.requestNextQuestion()
+        
+    }
+    
+    func didAnswer(isCorrectAnswer: Bool) {
+        if isCorrectAnswer {
+            correctAnswers += 1
+            statisticService?.correctAnswersAllTheTime += 1
+        }
+        
     }
     
     func switchToNextQuestion() {
@@ -86,32 +89,42 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             guard let self = self else { return }
             self.proceedToNextQuestionOrResults()
+            self.viewController?.makeButtonsActive()
         }
     }
     
     private func proceedToNextQuestionOrResults() {
         if self.isLastQuestion() {
+            statisticService?.gamesQuizCount += 1
+            statisticService?.questionsAllTheTime += questionsAmount
+
             let text = "Ваш результат: \(correctAnswers) из 10"
             let viewModel = QuizResultsViewModel(
                 title: "Этот раунд окончен!",
                 text: text,
                 buttonText: "Сыграть ещё раз")
             viewController?.show(quiz: viewModel)
+
+
         } else {
             self.switchToNextQuestion()
             questionFactory?.requestNextQuestion()
         }
     }
     func makeResultsMessage() -> String {
-        statisticServiceImplementation.store(correct: correctAnswers, total: questionsAmount)
+        guard let statisticService = statisticService else {
+            return "Error"
+        }
+        statisticService.store(correct: correctAnswers, total: questionsAmount)
         
-        let bestGame = statisticServiceImplementation.bestGame
         
-        let totalPlaysCountLine = "Количество сыгранных квизов: \(statisticServiceImplementation.gamesQuizCount)"
+        let bestGame = statisticService.bestGame
+        
+        let totalPlaysCountLine = "Количество сыгранных квизов: \(statisticService.gamesQuizCount)"
         let currentGameResultLine = "Ваш результат: \(correctAnswers)\\\(questionsAmount)"
         let bestGameInfoLine = "Рекорд: \(bestGame.correct)\\\(bestGame.total)"
         + " (\(bestGame.date.dateTimeString))"
-        let averageAccuracyLine = "Средняя точность: \(String(format: "%.2f", statisticServiceImplementation.totalAccuracy))%"
+        let averageAccuracyLine = "Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%"
         
         let resultMessage = [
             currentGameResultLine, totalPlaysCountLine, bestGameInfoLine, averageAccuracyLine
